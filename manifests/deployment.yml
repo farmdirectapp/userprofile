@@ -1,0 +1,16 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: "farmdirectkubnetcluster"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "farmdirectkubnetcluster"
+    spec:
+      containers:
+        - name: "farmdirectkubnetcluster"
+          image: "farmdirectcontainerregistry.azurecr.io/farmdirectkubnetcluster"
+          ports:
+          - containerPort: 80
