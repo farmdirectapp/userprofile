@@ -9,7 +9,7 @@
 
    3. To start MongoDB - go to MongoDB Installation dir \bin 
  
-   4. run command ./mongo --dbpath={data directory path}/data
+   4. run command ./mongod --dbpath={data directory path}/data
 
 #Install MongoDB UI client "MongoDB Compass"
 
