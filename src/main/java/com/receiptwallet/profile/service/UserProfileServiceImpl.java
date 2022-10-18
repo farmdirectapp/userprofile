@@ -4,9 +4,11 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
 import com.receiptwallet.profile.common.Constants;
+import com.receiptwallet.profile.model.UserProfileModel;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -34,14 +36,16 @@ public class UserProfileServiceImpl implements UserProfileService {
 	}
 
 	@Override
-	public boolean addUserProfile(UserProfile userProfile) {
-		userProfile.setProfileStatus(Constants.STATUS_ACTIVE);
+	public void addUserProfile(UserProfileModel profile) {
+		UserProfile usrProfileEntity = new UserProfile();
+		BeanUtils.copyProperties(profile, usrProfileEntity);
+
+		usrProfileEntity.setProfileStatus(Constants.STATUS_ACTIVE);
 		Timestamp currentTime = Timestamp.valueOf(ZonedDateTime.now(Constants.ZONEID_IST).toLocalDateTime());
-		userProfile.setCreatedTs(currentTime);
-		userProfile.setUpdatedTs(currentTime);
-		userProfile.setProfileId(null);
-		this.userProfileRepo.save(userProfile);
-		return true;
+		usrProfileEntity.setCreatedTs(currentTime);
+		usrProfileEntity.setUpdatedTs(currentTime);
+		usrProfileEntity.setProfileId(null);
+		this.userProfileRepo.save(usrProfileEntity);
 	}
 
 	@Override
@@ -56,15 +60,6 @@ public class UserProfileServiceImpl implements UserProfileService {
 		return false;
 	}
 
-	@Override
-	public boolean isUserProfileExistByEmailId(String emailId) {
-		UserProfile userProfile = userProfileRepo.findByEmailId(emailId);
-		if (userProfile != null && StringUtils.isNotBlank(userProfile.getEmailId())) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 
 	@Override
 	public UserProfile findUserProfileByEmailId(String emailId) {
@@ -82,15 +77,15 @@ public class UserProfileServiceImpl implements UserProfileService {
 	}
 
 	@Override
+	public boolean isUserProfileExistByEmailId(String emailId) {
+		UserProfile userProfile = userProfileRepo.findByEmailId(emailId);
+		return userProfile != null ? true : false;
+	}
+
+	@Override
 	public boolean isUserProfileExistByEmailIdOrPhone(String emailId, String phone) {
-
 		UserProfile userProfile = userProfileRepo.findByEmailIdOrPhone(emailId, phone);
-
-		if (userProfile != null) {
-			return true;
-		} else {
-			return false;
-		}
+		return userProfile != null ? true : false;
 	}
 
 	@Override

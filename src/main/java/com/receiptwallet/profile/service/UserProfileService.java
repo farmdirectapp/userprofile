@@ -1,10 +1,11 @@
 package com.receiptwallet.profile.service;
 
 import com.receiptwallet.profile.entity.UserProfile;
+import com.receiptwallet.profile.model.UserProfileModel;
 
 public interface UserProfileService {
 
-	public boolean addUserProfile(UserProfile userProfile);
+	public void addUserProfile(UserProfileModel userProfile);
 
 	public boolean updateProfile(UserProfile userProfile);
 

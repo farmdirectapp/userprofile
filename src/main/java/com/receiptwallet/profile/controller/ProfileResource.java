@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,8 @@ import java.util.List;
 public class ProfileResource {
 
 	Logger logger = LoggerFactory.getLogger(ProfileResource.class);
+
+	private static Response  profileNotFound = new Response(ErrorCode.ERROR_PROFILE_NOT_FOUND, "Profile not found", false);
 
 	@Autowired
 	UserProfileService profileService;
@@ -82,47 +86,34 @@ public class ProfileResource {
 
 	@GetMapping("/findByPhone")
 	@ApiOperation(value = "Find UserProfile by Phone")
-	public UserProfile getProfileByPhone(@RequestParam(value = "phone", required = true) String phone) {
+	public ResponseEntity getProfileByPhone(@RequestParam(value = "phone", required = true) String phone) {
 		logger.info("getProfileByPhone for phone {}", phone);
-
 		UserProfile userProfile = profileService.findByPhone(phone);
-		if (userProfile != null) {
-			return userProfile;
-		} else {
-			return new UserProfile(ErrorCode.FAILURE, "Profile not found for the phone number.", false);
-		}
+		return userProfile != null? new ResponseEntity<>(userProfile,HttpStatus.OK)
+				: new ResponseEntity<>(profileNotFound,HttpStatus.NOT_FOUND);
 	}
+
 
 	@PostMapping(consumes = "application/json", produces = "application/json")
 	@ApiOperation(value = "Create new Profile")
-	public Response createProfile(@Valid @RequestBody UserProfileModel profile) {
+	public ResponseEntity createUserProfile(@Valid @RequestBody UserProfileModel profile) {
 		logger.info("createProfile for the e-mail {}", profile.getEmailId());
-		/* Check if user exist for the email */
-		if (profileService.isUserProfileExistByEmailIdOrPhone(profile.getEmailId(), profile.getPhone())) {
-			// if(profileService.isUserProfileExistByEmailId(profile.getEmailId()))
-			// {
-			// return new Response(ErrorCode.ERROR_PROFILE_EXIST, "Profile
-			// already exist for this e-mail",false);
+		if (profileService.isUserProfileExistByEmailId(profile.getEmailId())) {
 			InputValidationMessage validationMessage = new InputValidationMessage(400,
 					"Profile already exist for this e-mail or phone number", false);
 			List<FieldValidationResult> list = new ArrayList<FieldValidationResult>();
 			list.add(new FieldValidationResult("emailId", "Profile already exist for this e-mail or phone number"));
 			validationMessage.setValidationResult(list);
-			return validationMessage;
+			return new ResponseEntity<>(validationMessage, HttpStatus.OK);
+		}else {
+			profileService.addUserProfile(profile);
+			return new ResponseEntity<>(profile, HttpStatus.OK);
 		}
-		/* Create new profile */
-
-		UserProfile usrProfileEntity = new UserProfile();
-		BeanUtils.copyProperties(profile, usrProfileEntity);
-		if (profileService.addUserProfile(usrProfileEntity)) {
-			return usrProfileEntity;
-		}
-		return Response.FAILURE;
 	}
 
 	@PutMapping(consumes = "application/json", produces = "application/json")
 	@ApiOperation(value = "Update existing Profile")
-	public Response updateProfile(@Valid @RequestBody UserProfile profile) {
+	public Response updateUserProfile(@Valid @RequestBody UserProfile profile) {
 		logger.info("updateProfile for the e-mail {}", profile.getEmailId());
 		if (profile.getProfileId() == null) { // TODO check profile id
 			return new Response(ErrorCode.ERROR_PROFILE_ID_NOT_FOUND, "Profile Id is missing to update profile", false);
